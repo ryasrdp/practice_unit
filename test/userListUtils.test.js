@@ -1,0 +1,468 @@
+import { assert } from 'chai';
+import * as userListUtils from '../utils/usersListUtils.js';
+
+describe('userListUtils', () => {
+  const validUsers = [
+    { id: 1, name: 'Alice', age: 30, email: 'alice@example.com' },
+    { id: 2, name: 'Bob', age: 25, email: 'bob@example.com' },
+    { id: 3, name: 'Charlie', age: 35, email: 'charlie@example.com' },
+    { id: 4, name: 'Diana', age: 18, email: 'diana@example.com' },
+    { id: 5, name: 'Eve', age: 65, email: 'eve@example.com' },
+  ];
+
+  const singleUser = [{ id: 1, name: 'Alice', age: 30, email: 'alice@example.com' }];
+  const emptyUsers = [];
+
+  describe('filterUsersByAge()', () => {
+    it('should return users within age range', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 25, 35);
+      assert.strictEqual(result.length, 3);
+      assert.ok(result.some(u => u.name === 'Alice'));
+      assert.ok(result.some(u => u.name === 'Bob'));
+      assert.ok(result.some(u => u.name === 'Charlie'));
+    });
+
+    it('should throw Error for non-array input', () => {
+      assert.throws(() => userListUtils.filterUsersByAge(null, 18, 65), Error);
+      assert.throws(() => userListUtils.filterUsersByAge(undefined, 18, 65), Error);
+      assert.throws(() => userListUtils.filterUsersByAge('users', 18, 65), Error);
+      assert.throws(() => userListUtils.filterUsersByAge({}, 18, 65), Error);
+      assert.throws(() => userListUtils.filterUsersByAge(123, 18, 65), Error);
+    });
+
+    it('should throw with message indicating users must be array', () => {
+      try {
+        userListUtils.filterUsersByAge('invalid', 18, 65);
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert.match(e.message, /users must be an array/i);
+      }
+    });
+
+    it('should include user exactly at minAge', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 18, 20);
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].name, 'Diana');
+    });
+
+    it('should include user exactly at maxAge', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 60, 65);
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].name, 'Eve');
+    });
+
+    it('should exclude users just outside boundaries', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 19, 64);
+      assert.ok(!result.some(u => u.name === 'Diana'));
+      assert.ok(!result.some(u => u.name === 'Eve'));
+    });
+
+    it('should return empty array when input is empty', () => {
+      const result = userListUtils.filterUsersByAge(emptyUsers, 18, 65);
+      assert.deepEqual(result, []);
+    });
+
+    it('should return empty array when no users match criteria', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 100, 120);
+      assert.deepEqual(result, []);
+    });
+
+    it('should handle minAge equal to maxAge', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 30, 30);
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].name, 'Alice');
+    });
+
+    it('should return empty when minAge greater than maxAge', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, 65, 18);
+      assert.deepEqual(result, []);
+    });
+
+    it('should handle age zero', () => {
+      const usersWithZeroAge = [{ id: 1, name: 'Baby', age: 0 }];
+      const result = userListUtils.filterUsersByAge(usersWithZeroAge, 0, 5);
+      assert.strictEqual(result.length, 1);
+    });
+
+    it('should handle negative age range (returns empty)', () => {
+      const result = userListUtils.filterUsersByAge(validUsers, -10, -1);
+      assert.deepEqual(result, []);
+    });
+
+    it('should handle floating point ages', () => {
+      const usersWithFloatAge = [{ id: 1, name: 'User', age: 25.5 }];
+      assert.strictEqual(userListUtils.filterUsersByAge(usersWithFloatAge, 25, 26).length, 1);
+      assert.strictEqual(userListUtils.filterUsersByAge(usersWithFloatAge, 26, 27).length, 0);
+    });
+
+    it('should work with single user array', () => {
+      assert.strictEqual(userListUtils.filterUsersByAge(singleUser, 25, 35).length, 1);
+      assert.strictEqual(userListUtils.filterUsersByAge(singleUser, 31, 35).length, 0);
+    });
+
+    it('should handle users with missing age property', () => {
+      const usersWithMissingAge = [{ id: 1, name: 'NoAge' }];
+      const result = userListUtils.filterUsersByAge(usersWithMissingAge, 18, 65);
+      assert.deepEqual(result, []);
+    });
+
+    it('should handle users with null age (null coerces to 0)', () => {
+      const usersWithNullAge = [{ id: 1, name: 'NullAge', age: null }];
+      const result = userListUtils.filterUsersByAge(usersWithNullAge, 0, 65);
+      assert.strictEqual(result.length, 1);
+    });
+
+    it('should handle users with NaN age', () => {
+      const usersWithNaNAge = [{ id: 1, name: 'NaNAge', age: NaN }];
+      const result = userListUtils.filterUsersByAge(usersWithNaNAge, 18, 65);
+      assert.deepEqual(result, []);
+    });
+
+    it('should handle sparse arrays', () => {
+      const sparseUsers = [validUsers[0], , validUsers[2]];
+      const result = userListUtils.filterUsersByAge(sparseUsers, 18, 65);
+      assert.ok(Array.isArray(result));
+    });
+
+    it('should handle Infinity age values', () => {
+      const usersWithInfinityAge = [{ id: 1, name: 'Infinity', age: Infinity }];
+      assert.strictEqual(userListUtils.filterUsersByAge(usersWithInfinityAge, 0, Infinity).length, 1);
+      assert.strictEqual(userListUtils.filterUsersByAge(usersWithInfinityAge, 0, 100).length, 0);
+    });
+
+    it('should handle -Infinity age values', () => {
+      const usersWithNegInfinity = [{ id: 1, name: 'NegInf', age: -Infinity }];
+      assert.strictEqual(userListUtils.filterUsersByAge(usersWithNegInfinity, -Infinity, 0).length, 1);
+    });
+
+    it('should handle string age that looks numeric', () => {
+      const usersWithStringAge = [{ id: 1, name: 'StringAge', age: '30' }];
+      const result = userListUtils.filterUsersByAge(usersWithStringAge, 18, 65);
+      assert.strictEqual(result.length, 1);
+    });
+  });
+
+  describe('sortUsersByName()', () => {
+    it('should sort users alphabetically by name', () => {
+      const result = userListUtils.sortUsersByName(validUsers);
+      assert.strictEqual(result[0].name, 'Alice');
+      assert.strictEqual(result[1].name, 'Bob');
+      assert.strictEqual(result[2].name, 'Charlie');
+      assert.strictEqual(result[3].name, 'Diana');
+      assert.strictEqual(result[4].name, 'Eve');
+    });
+
+    it('should throw Error for non-array input', () => {
+      assert.throws(() => userListUtils.sortUsersByName(null), Error);
+      assert.throws(() => userListUtils.sortUsersByName(undefined), Error);
+      assert.throws(() => userListUtils.sortUsersByName('users'), Error);
+      assert.throws(() => userListUtils.sortUsersByName({}), Error);
+      assert.throws(() => userListUtils.sortUsersByName(123), Error);
+    });
+
+    it('should throw with message indicating users must be array', () => {
+      try {
+        userListUtils.sortUsersByName('invalid');
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert.match(e.message, /users must be an array/i);
+      }
+    });
+
+    it('should return a new array (not mutate original)', () => {
+      const original = [...validUsers];
+      const result = userListUtils.sortUsersByName(validUsers);
+      assert.notStrictEqual(result, validUsers);
+      assert.deepEqual(validUsers, original);
+    });
+
+    it('should return empty array when input is empty', () => {
+      const result = userListUtils.sortUsersByName(emptyUsers);
+      assert.deepEqual(result, []);
+    });
+
+    it('should return same user for single-element array', () => {
+      const result = userListUtils.sortUsersByName(singleUser);
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].name, 'Alice');
+    });
+
+    it('should handle case-insensitive sorting (localeCompare behavior)', () => {
+      const mixedCaseUsers = [
+        { id: 1, name: 'bob' },
+        { id: 2, name: 'Alice' },
+        { id: 3, name: 'charlie' },
+      ];
+      const result = userListUtils.sortUsersByName(mixedCaseUsers);
+      assert.strictEqual(result[0].name, 'Alice');
+      assert.strictEqual(result[1].name, 'bob');
+      assert.strictEqual(result[2].name, 'charlie');
+    });
+
+    it('should handle unicode names', () => {
+      const unicodeUsers = [
+        { id: 1, name: 'Ärger' },
+        { id: 2, name: 'über' },
+        { id: 3, name: 'Banana' },
+      ];
+      const result = userListUtils.sortUsersByName(unicodeUsers);
+      assert.strictEqual(result.length, 3);
+    });
+
+    it('should handle names with special characters', () => {
+      const specialUsers = [
+        { id: 1, name: 'Z-Man' },
+        { id: 2, name: 'A\'Brien' },
+      ];
+      const result = userListUtils.sortUsersByName(specialUsers);
+      assert.strictEqual(result[0].name, 'A\'Brien');
+      assert.strictEqual(result[1].name, 'Z-Man');
+    });
+
+    it('should handle empty string names', () => {
+      const emptyNameUsers = [
+        { id: 1, name: '' },
+        { id: 2, name: 'Alice' },
+      ];
+      const result = userListUtils.sortUsersByName(emptyNameUsers);
+      assert.strictEqual(result[0].name, '');
+      assert.strictEqual(result[1].name, 'Alice');
+    });
+
+    it('should maintain order for users with same name (stable sort)', () => {
+      const sameNameUsers = [
+        { id: 1, name: 'Alice' },
+        { id: 2, name: 'Alice' },
+        { id: 3, name: 'Alice' },
+      ];
+      const result = userListUtils.sortUsersByName(sameNameUsers);
+      assert.strictEqual(result.length, 3);
+      assert.ok(result.every(u => u.name === 'Alice'));
+    });
+
+    it('should handle reverse sorted array', () => {
+      const reverseUsers = [
+        { id: 1, name: 'Zara' },
+        { id: 2, name: 'Mike' },
+        { id: 3, name: 'Anna' },
+      ];
+      const result = userListUtils.sortUsersByName(reverseUsers);
+      assert.strictEqual(result[0].name, 'Anna');
+      assert.strictEqual(result[1].name, 'Mike');
+      assert.strictEqual(result[2].name, 'Zara');
+    });
+
+    it('should place undefined elements at end for sparse arrays', () => {
+      const sparseUsers = [{ id: 1, name: 'Zara' }, , { id: 3, name: 'Anna' }];
+      const result = userListUtils.sortUsersByName(sparseUsers);
+      assert.strictEqual(result.length, 3);
+      assert.strictEqual(result[0].name, 'Anna');
+      assert.strictEqual(result[1].name, 'Zara');
+      assert.strictEqual(result[2], undefined);
+    });
+
+    it('should handle numeric string names', () => {
+      const numericNameUsers = [
+        { id: 1, name: '10' },
+        { id: 2, name: '2' },
+        { id: 3, name: '1' },
+      ];
+      const result = userListUtils.sortUsersByName(numericNameUsers);
+      assert.strictEqual(result[0].name, '1');
+      assert.strictEqual(result[1].name, '10');
+      assert.strictEqual(result[2].name, '2');
+    });
+  });
+
+  describe('findUserById()', () => {
+    it('should return user when id matches', () => {
+      const result = userListUtils.findUserById(validUsers, 1);
+      assert.strictEqual(result.name, 'Alice');
+      assert.strictEqual(result.id, 1);
+    });
+
+    it('should return null when id not found', () => {
+      const result = userListUtils.findUserById(validUsers, 999);
+      assert.strictEqual(result, null);
+    });
+
+    it('should throw Error for non-array input', () => {
+      assert.throws(() => userListUtils.findUserById(null, 1), Error);
+      assert.throws(() => userListUtils.findUserById(undefined, 1), Error);
+      assert.throws(() => userListUtils.findUserById('users', 1), Error);
+      assert.throws(() => userListUtils.findUserById({}, 1), Error);
+      assert.throws(() => userListUtils.findUserById(123, 1), Error);
+    });
+
+    it('should throw with message indicating users must be array', () => {
+      try {
+        userListUtils.findUserById('invalid', 1);
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert.match(e.message, /users must be an array/i);
+      }
+    });
+
+    it('should return null for empty array', () => {
+      const result = userListUtils.findUserById(emptyUsers, 1);
+      assert.strictEqual(result, null);
+    });
+
+    it('should work with single user array', () => {
+      assert.strictEqual(userListUtils.findUserById(singleUser, 1).name, 'Alice');
+      assert.strictEqual(userListUtils.findUserById(singleUser, 2), null);
+    });
+
+    it('should handle id of zero', () => {
+      const usersWithZeroId = [{ id: 0, name: 'ZeroId' }];
+      const result = userListUtils.findUserById(usersWithZeroId, 0);
+      assert.strictEqual(result.name, 'ZeroId');
+    });
+
+    it('should handle negative id', () => {
+      const usersWithNegativeId = [{ id: -1, name: 'NegativeId' }];
+      const result = userListUtils.findUserById(usersWithNegativeId, -1);
+      assert.strictEqual(result.name, 'NegativeId');
+    });
+
+    it('should use strict equality for id comparison', () => {
+      const result = userListUtils.findUserById(validUsers, '1');
+      assert.strictEqual(result, null);
+    });
+
+    it('should return first matching user when duplicates exist', () => {
+      const duplicateIdUsers = [
+        { id: 1, name: 'First' },
+        { id: 1, name: 'Second' },
+      ];
+      const result = userListUtils.findUserById(duplicateIdUsers, 1);
+      assert.strictEqual(result.name, 'First');
+    });
+
+    it('should return null when searching for NaN id', () => {
+      const result = userListUtils.findUserById(validUsers, NaN);
+      assert.strictEqual(result, null);
+    });
+
+    it('should handle user with undefined id', () => {
+      const usersWithUndefinedId = [{ id: undefined, name: 'UndefinedId' }];
+      const result = userListUtils.findUserById(usersWithUndefinedId, undefined);
+      assert.strictEqual(result.name, 'UndefinedId');
+    });
+
+    it('should return the actual user object reference', () => {
+      const result = userListUtils.findUserById(validUsers, 1);
+      assert.strictEqual(result, validUsers[0]);
+    });
+
+    it('should crash on sparse arrays (BUG)', () => {
+      const sparseUsers = [{ id: 1, name: 'First' }, , { id: 3, name: 'Third' }];
+      assert.throws(() => userListUtils.findUserById(sparseUsers, 2), TypeError);
+    });
+
+    it('should handle floating point id', () => {
+      const usersWithFloatId = [{ id: 1.5, name: 'FloatId' }];
+      assert.strictEqual(userListUtils.findUserById(usersWithFloatId, 1.5).name, 'FloatId');
+      assert.strictEqual(userListUtils.findUserById(usersWithFloatId, 1), null);
+    });
+
+    it('should handle Infinity as id', () => {
+      const usersWithInfinityId = [{ id: Infinity, name: 'InfinityId' }];
+      assert.strictEqual(userListUtils.findUserById(usersWithInfinityId, Infinity).name, 'InfinityId');
+    });
+  });
+
+  describe('isEmailTaken()', () => {
+    it('should return true when email exists', () => {
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, 'alice@example.com'), true);
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, 'bob@example.com'), true);
+    });
+
+    it('should return false when email does not exist', () => {
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, 'notfound@example.com'), false);
+    });
+
+    it('should throw Error for non-array input', () => {
+      assert.throws(() => userListUtils.isEmailTaken(null, 'test@example.com'), Error);
+      assert.throws(() => userListUtils.isEmailTaken(undefined, 'test@example.com'), Error);
+      assert.throws(() => userListUtils.isEmailTaken('users', 'test@example.com'), Error);
+      assert.throws(() => userListUtils.isEmailTaken({}, 'test@example.com'), Error);
+      assert.throws(() => userListUtils.isEmailTaken(123, 'test@example.com'), Error);
+    });
+
+    it('should throw with message indicating users must be array', () => {
+      try {
+        userListUtils.isEmailTaken('invalid', 'test@example.com');
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert.match(e.message, /users must be an array/i);
+      }
+    });
+
+    it('should return false for empty array', () => {
+      assert.strictEqual(userListUtils.isEmailTaken(emptyUsers, 'test@example.com'), false);
+    });
+
+    it('should work with single user array', () => {
+      assert.strictEqual(userListUtils.isEmailTaken(singleUser, 'alice@example.com'), true);
+      assert.strictEqual(userListUtils.isEmailTaken(singleUser, 'other@example.com'), false);
+    });
+
+    it('should be case-sensitive for email comparison', () => {
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, 'ALICE@EXAMPLE.COM'), false);
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, 'Alice@Example.Com'), false);
+    });
+
+    it('should handle empty string email', () => {
+      const usersWithEmptyEmail = [{ id: 1, name: 'NoEmail', email: '' }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithEmptyEmail, ''), true);
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, ''), false);
+    });
+
+    it('should handle email with whitespace', () => {
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, ' alice@example.com'), false);
+      assert.strictEqual(userListUtils.isEmailTaken(validUsers, 'alice@example.com '), false);
+    });
+
+    it('should handle special characters in email', () => {
+      const usersWithSpecialEmail = [{ id: 1, name: 'Special', email: 'user+tag@example.com' }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithSpecialEmail, 'user+tag@example.com'), true);
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithSpecialEmail, 'usertag@example.com'), false);
+    });
+
+    it('should handle users with missing email property', () => {
+      const usersWithMissingEmail = [{ id: 1, name: 'NoEmail' }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithMissingEmail, undefined), true);
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithMissingEmail, 'test@example.com'), false);
+    });
+
+    it('should handle users with null email', () => {
+      const usersWithNullEmail = [{ id: 1, name: 'NullEmail', email: null }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithNullEmail, null), true);
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithNullEmail, 'test@example.com'), false);
+    });
+
+    it('should use strict equality for email comparison', () => {
+      const usersWithNumericEmail = [{ id: 1, name: 'NumericEmail', email: 123 }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithNumericEmail, '123'), false);
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithNumericEmail, 123), true);
+    });
+
+    it('should handle sparse arrays', () => {
+      const sparseUsers = [{ id: 1, email: 'a@test.com' }, , { id: 3, email: 'c@test.com' }];
+      assert.strictEqual(userListUtils.isEmailTaken(sparseUsers, 'a@test.com'), true);
+      assert.strictEqual(userListUtils.isEmailTaken(sparseUsers, 'c@test.com'), true);
+    });
+
+    it('should handle unicode normalization differences', () => {
+      const usersWithUnicodeEmail = [{ id: 1, email: 'cafe\u0301@test.com' }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithUnicodeEmail, 'café@test.com'), false);
+    });
+
+    it('should handle very long email strings', () => {
+      const longEmail = 'a'.repeat(1000) + '@test.com';
+      const usersWithLongEmail = [{ id: 1, email: longEmail }];
+      assert.strictEqual(userListUtils.isEmailTaken(usersWithLongEmail, longEmail), true);
+    });
+  });
+});

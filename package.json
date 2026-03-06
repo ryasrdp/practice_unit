@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --require @babel/register",
+    "coverage": "c8 npm test",
+    "lint": "npx eslint .",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -16,5 +19,21 @@
   "bugs": {
     "url": "https://github.com/ryasrdp/practice_unit/issues"
   },
-  "homepage": "https://github.com/ryasrdp/practice_unit#readme"
+  "homepage": "https://github.com/ryasrdp/practice_unit#readme",
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/register": "^7.28.6",
+    "eslint": "^9.39.4",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "mocha": "^11.7.5"
+  },
+  "dependencies": {
+    "chai": "^6.2.2",
+    "core-js": "^3.48.0"
+  },
+  "mocha": {
+    "reporter": "dot"
+  },
+  "type": "module"
 }
