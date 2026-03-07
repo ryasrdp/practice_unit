@@ -22,6 +22,7 @@
   "homepage": "https://github.com/ryasrdp/practice_unit#readme",
   "devDependencies": {
     "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
     "@babel/register": "^7.28.6",
     "eslint": "^9.39.4",
     "globals": "^17.4.0",
@@ -34,6 +35,5 @@
   },
   "mocha": {
     "reporter": "dot"
-  },
-  "type": "module"
+  }
 }
