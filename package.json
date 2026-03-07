@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha --require @babel/register",
     "coverage": "c8 npm test",
-    "lint": "npx eslint .",
+    "eslint": "npx eslint .",
     "prepare": "husky"
   },
   "repository": {
