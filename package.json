@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require @babel/register",
+    "test": "mocha --reporter mochawesome --require @babel/register",
     "coverage": "c8 npm test",
     "eslint": "npx eslint .",
     "prepare": "husky"
@@ -27,7 +27,8 @@
     "eslint": "^9.39.4",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
-    "mocha": "^11.7.5"
+    "mocha": "^11.7.5",
+    "mochawesome": "^7.1.4"
   },
   "dependencies": {
     "chai": "^6.2.2",

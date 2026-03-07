@@ -6,6 +6,7 @@
 /node_modules
 .github/
 coverage/
+mochawesome-report/
 
 # User-specific stuff
 .idea/**/workspace.xml

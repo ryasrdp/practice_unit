@@ -1,5 +1,6 @@
 export default {
   files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
+  ignores: ['mochawesome-report/**'],
   languageOptions: {
     ecmaVersion: 2021,
     sourceType: 'module',
