@@ -7,7 +7,7 @@ describe('arrayUtils', () => {
       assert.equal(arrayUtils.findMax([1, 2, 3, 5, 6, 1231, 3]), 1231);
       assert.equal(arrayUtils.findMax([-1, -2, -3, -5, -6, -1231, -3]), -1);
     });
-    it('Should return -Infinity for an empty array (bug)', () => {
+    it('Should return -Infinity for an empty array', () => {
       assert.equal(arrayUtils.findMax([]), -Infinity);
     });
     it('Should throw an error if the input is not an array', () => {
@@ -15,7 +15,7 @@ describe('arrayUtils', () => {
       assert.throws(() => arrayUtils.findMax(123), Error);
       assert.throws(() => arrayUtils.findMax({}), Error);
     });
-    it('Should return NaN if the array contains non-numeric values (bug)', () => {
+    it('Should return NaN if the array contains non-numeric values', () => {
       assert.isNaN(arrayUtils.findMax([1, 2, 'three', 4]));
       assert.equal(arrayUtils.findMax([1, 2, null, 4]), 4);
       assert.isNaN(arrayUtils.findMax([1, 2, undefined, 4]));
@@ -27,7 +27,7 @@ describe('arrayUtils', () => {
       assert.equal(arrayUtils.findMin([1, 2, 3, 5, 6, 1231, 3]), 1);
       assert.equal(arrayUtils.findMin([-1, -2, -3, -5, -6, -1231, -3]), -1231);
     });
-    it('Should return Infinity for an empty array (bug)', () => {
+    it('Should return Infinity for an empty array', () => {
       assert.equal(arrayUtils.findMin([]), Infinity);
     });
     it('Should throw an error if the input is not an array', () => {
@@ -35,7 +35,7 @@ describe('arrayUtils', () => {
       assert.throws(() => arrayUtils.findMin(123), Error);
       assert.throws(() => arrayUtils.findMin({}), Error);
     });
-    it('Should return NaN if the array contains non-numeric values (bug)', () => {
+    it('Should return NaN if the array contains non-numeric values', () => {
       assert.isNaN(arrayUtils.findMin([1, 2, 'three', 4]));
       assert.equal(arrayUtils.findMin([1, 2, null, 4]), 0);
       assert.isNaN(arrayUtils.findMin([1, 2, undefined, 4]));
